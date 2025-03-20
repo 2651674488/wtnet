@@ -5,6 +5,8 @@ from einops import reduce
 from utils.tools import get_activation
 from utils.tools import get_dim
 import pywt
+import numpy as np
+
 
 
 class MLPBlock(nn.Module):
@@ -22,14 +24,14 @@ class MLPBlock(nn.Module):
             get_activation(self.activ),
             nn.LayerNorm(self.hid_feature),
             nn.Dropout(self.drop),
-            nn.Linear(self.hid_feature, self.out_feature),
+            nn.Linear(self.hid_feature, self.out_feature)
         )
 
     def forward(self, x):
-        x = torch.transpose(x, 1, 2)
-        x = self.net(x)
-        x = torch.transpose(x, 1, 2)
-        return x
+        new_x = torch.transpose(x, 1, 2)
+        new_x = self.net(new_x)
+        new_x = torch.transpose(new_x, 1, 2)
+        return new_x + x
 
 
 class PredHead(nn.Module):
@@ -59,32 +61,28 @@ class WtNet(nn.Module):
         self.activ = activ
         self.drop = drop
         self.axis = axis
-        self.mlp_block_list = nn.ModuleList()
-        self.feature = []
+        self.mlp_approx_block = MLPBlock(pred_len, hid_chn, out_chn, activ, drop)
+        self.mlp_detail_block = MLPBlock(pred_len, hid_chn, out_chn, activ, drop)
+        self.end_mlp = MLPBlock(pred_len, hid_chn, out_chn, activ, drop)
         # self.norm = norm
-
-        for i in range(level):
-            pred_len = int((pred_len + filter_len - 1) / 2)
-            self.feature.append(pred_len)
-            if i == level - 1:
-                self.feature.append(pred_len)
-        self.feature.reverse()
-
-        # 升维
-        self.pref_head = PredHead(self.in_chn, self.hid_chn)
-
-        self.end_mlp = MLPBlock(self.out_chn, self.hid_chn, out_chn, self.activ, self.drop)
-        for i in range(self.level + 1):
-            self.mlp_block_list.append(MLPBlock(self.feature[i], hid_chn, out_chn, activ, drop))
+        self.mlp_approx_end = MLPBlock(self.out_chn, self.hid_chn, out_chn, self.activ, self.drop)
+        self.mlp_detail_end = MLPBlock(self.out_chn, self.hid_chn, out_chn, self.activ, self.drop)
 
     def forward(self, x, x_time):
         p_head_cpu = x.cpu().detach().numpy()
-        coeffs = pywt.wavedec(p_head_cpu, wavelet=self.wavelet, level=self.level, axis=self.axis)
-        coeffs_list = [torch.from_numpy(c).to(x.device) for c in coeffs]
+        coeffs = pywt.swt(p_head_cpu, wavelet=self.wavelet, level=self.level, axis=self.axis)
+        coeffs_list = [torch.from_numpy(np.array(c)).to(x.device) for c in coeffs]
         pred_list = []
-        for i, mlp_block in enumerate(self.mlp_block_list):
-            pred = mlp_block(coeffs_list[i]).float()
-            pred_list.append(pred)
-        output = reduce(torch.stack(pred_list, 0), "h b l c -> b l c", "sum")
-        output = self.end_mlp(output)
+        pred_approx_list = []
+        pred_detail_list = []
+        for i in range(len(coeffs)):
+            approx, detail = coeffs_list[i]  # 解包近似系数和细节系数
+            approx = self.mlp_approx_block(approx)
+            detail = self.mlp_detail_block(detail)
+            pred_approx_list.append(approx)
+            pred_detail_list.append(detail)
+        approx_all = reduce(torch.stack(pred_approx_list, 0), "h b l c -> b l c", "sum")
+        detail_all = reduce(torch.stack(pred_detail_list, 0), "h b l c -> b l c", "sum")
+        end = self.mlp_approx_end(approx_all) + self.mlp_detail_end(detail_all)
+        output = self.end_mlp(end)
         return output, x
