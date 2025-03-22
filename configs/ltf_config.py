@@ -17,7 +17,7 @@ class LTFConfig():
         self.activ = "gelu"
         self.norm = None
         self.wavelet = "db4"
-        self.level = 3
+        self.level = 5
         self.filter_len = 8
         self.axis = 1
         #
