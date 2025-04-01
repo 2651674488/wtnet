@@ -7,7 +7,7 @@ from utils.tools import get_csv_logger
 
 
 def ltf_experiment(config,gpus):
-    pl.seed_everything(2023)
+    pl.seed_everything(2025)
     _, train_dl = data_provider(config, "train")
     _, val_dl = data_provider(config, "val")
     _, test_dl = data_provider(config, "test")

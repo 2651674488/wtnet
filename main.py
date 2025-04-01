@@ -1,6 +1,7 @@
 import torch
 import argparse
 from experiments.ltf_exp import run_ltf
+import time
 
 
 def get_parser():
@@ -24,8 +25,13 @@ def get_parser():
     return parser
 
 if __name__ == '__main__':
+    start_time = time.time()
     torch.backends.cudnn.benchmark = True
     torch.set_float32_matmul_precision('medium')
     args = get_parser().parse_args()
     # print(args)
     args.func(args)
+    end_time = time.time()
+    total_time_seconds = end_time - start_time
+    total_time_minutes = total_time_seconds / 60
+    print(f"程序运行时间：{total_time_minutes:.2f} 分钟")

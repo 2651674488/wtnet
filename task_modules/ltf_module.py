@@ -3,6 +3,7 @@ from torch.optim.lr_scheduler import *
 import pytorch_lightning as pl
 from utils.tools import get_loss_fn
 from model.wtnet import WtNet
+from model.residual_loss import residual_loss_fn
 from torchmetrics import MeanAbsoluteError, MeanSquaredError
 
 
@@ -13,13 +14,16 @@ class LTFModule(pl.LightningModule):
         self.save_hyperparameters()
         self.out_chn = config.out_chn
         self.model = WtNet(config.wavelet, config.level, config.axis, config.in_chn, config.hid_chn, config.out_chn,
-                           drop=config.drop)
+                           drop=config.drop, pred_len=config.pred_len, filter_len=config.filter_len)
 
         self.patience = 1
         self.lr = 1e-3
         self.lr_factor = config.lr_factor
         self.optim = "adamw"
         self.weight_decay = 0.1
+        # self.lambda_mse = config.lambda_mse
+        # self.lambda_acf = config.lambda_acf
+        # self.acf_cutoff = config.acf_cutoff
         self.val_mse = MeanSquaredError()
         self.val_mae = MeanAbsoluteError()
         self.test_mse = MeanSquaredError()
