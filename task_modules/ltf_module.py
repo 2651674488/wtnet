@@ -13,17 +13,18 @@ class LTFModule(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.out_chn = config.out_chn
-        self.model = WtNet(config.wavelet, config.level, config.axis, config.in_chn, config.hid_chn, config.out_chn,
-                           drop=config.drop, pred_len=config.pred_len, filter_len=config.filter_len)
+        self.model = WtNet(wavelet=config.wavelet, level=config.level, axis=config.axis, in_seq=config.in_seq,
+                           hid_seq=config.hid_seq, out_seq=config.out_seq, in_chn = config.in_chn,
+                           drop=config.drop, pred_len=config.pred_len,seq_len=config.seq_len, filter_len=config.filter_len)
 
-        self.patience = 1
-        self.lr = 1e-3
+        self.patience = config.patience
+        self.lr = config.lr
         self.lr_factor = config.lr_factor
         self.optim = "adamw"
-        self.weight_decay = 0.1
-        # self.lambda_mse = config.lambda_mse
-        # self.lambda_acf = config.lambda_acf
-        # self.acf_cutoff = config.acf_cutoff
+        self.weight_decay = config.weight_decay
+        self.lambda_mse = config.lambda_mse
+        self.lambda_acf = config.lambda_acf
+        self.acf_cutoff = config.acf_cutoff
         self.val_mse = MeanSquaredError()
         self.val_mae = MeanAbsoluteError()
         self.test_mse = MeanSquaredError()

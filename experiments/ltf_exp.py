@@ -27,7 +27,7 @@ def ltf_experiment(config,gpus):
                             name=f"{config.name}_{config.pred_len}")
     trainer = pl.Trainer(devices=[gpus],
                          accelerator="gpu",
-                         precision=16,
+                         precision="16-mixed",
                          callbacks=callbacks,
                          logger=logger,
                          max_epochs=50,

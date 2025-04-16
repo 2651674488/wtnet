@@ -151,7 +151,7 @@ def get_loss_fn(loss_fn: str):
     elif loss_fn == "mae":
         return nn.L1Loss()
     elif loss_fn == "huber":
-        return nn.HuberLoss(delta=.1)
+        return nn.HuberLoss(delta=1.0)
 
     raise RuntimeError("loss function should not be {}".format(loss_fn))
 

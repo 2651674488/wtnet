@@ -93,3 +93,18 @@ def residual_loss_fn(res: torch.Tensor,
         loss += lambda_acf * torch.pow(res_acf, 2).mean()
 
     return loss
+
+def loss_fn(alpha, y_pred, y_true):
+    '''
+    混合损失函数，综合考虑mae,mse
+    alpha=0.5：均衡 MAE 和 MSE。
+    alpha > 0.5：更关注 MAE（鲁棒性更强）。
+    alpha < 0.5：更关注 MSE（惩罚大误差）。
+    :param alpha:
+    :param y_pred:
+    :param y_true:
+    :return:
+    '''
+    mae = torch.abs(y_pred - y_true).mean()
+    mse = ((y_pred - y_true) ** 2).mean()
+    return alpha * mae + (1 - alpha) * mse
