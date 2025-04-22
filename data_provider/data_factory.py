@@ -7,7 +7,7 @@ def data_provider(args, flag):
         'ETTh2': Dataset_ETT_hour,
         'ETTm1': Dataset_ETT_minute,
         'ETTm2': Dataset_ETT_minute,
-
+        'custom': Dataset_Custom
     }
     Data = data_dict[args.data]
     timeenc = 0 if args.embed != 'timeF' else 1
@@ -33,6 +33,7 @@ def data_provider(args, flag):
         size=[args.seq_len, args.label_len, args.pred_len],
         features=args.features,
         target=args.target,
+        scale=args.scale,
         timeenc=timeenc,
         freq=freq,
     )

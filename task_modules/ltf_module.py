@@ -1,7 +1,7 @@
 import torch
 from torch.optim.lr_scheduler import *
 import pytorch_lightning as pl
-from utils.tools import get_loss_fn
+from utils.tools import get_loss_fn,visual
 from model.wtnet import WtNet
 from model.residual_loss import residual_loss_fn
 from torchmetrics import MeanAbsoluteError, MeanSquaredError
@@ -14,7 +14,7 @@ class LTFModule(pl.LightningModule):
         self.save_hyperparameters()
         self.out_chn = config.out_chn
         self.model = WtNet(wavelet=config.wavelet, level=config.level, axis=config.axis, in_seq=config.in_seq,
-                           hid_seq=config.hid_seq, out_seq=config.out_seq, in_chn = config.in_chn,
+                           hid_seq=config.hid_seq, out_seq=config.out_seq,
                            drop=config.drop, pred_len=config.pred_len,seq_len=config.seq_len, filter_len=config.filter_len)
 
         self.patience = config.patience
@@ -30,6 +30,7 @@ class LTFModule(pl.LightningModule):
         self.test_mse = MeanSquaredError()
         self.test_mae = MeanAbsoluteError()
         self.loss_fn = get_loss_fn(config.loss_fn)
+        self.config = config
 
     def training_step(self, batch, batch_idx):
         # 输入，输出，输入时间，_
@@ -72,6 +73,15 @@ class LTFModule(pl.LightningModule):
         self.log("test_mse", self.test_mse)
         self.log("test_mae", self.test_mae)
 
+        # 可视化部分（只对第一个batch进行可视化）
+        if batch_idx == 0:  # 只对第一个batch进行可视化，避免太多图片
+            # 假设y和y_pred的形状是[batch_size, seq_len, features]
+            # 这里我们取batch中的第一个样本进行可视化
+            true = y[0, :, self.out_chn - 1].detach().cpu().numpy()  # 取第一个样本，所有时间步，第一个特征
+            pred = y_pred[0, :, self.out_chn - 1].detach().cpu().numpy()
+            name = f'./pic/{self.config.name}/{self.config.pred_len}_{self.config.features}.png'
+            # 调用可视化函数
+            visual(self.config ,true, pred, name=name)
         return
 
     def configure_optimizers(self):

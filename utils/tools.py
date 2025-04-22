@@ -75,16 +75,22 @@ class StandardScaler():
         return (data * self.std) + self.mean
 
 
-def visual(true, preds=None, name='./pic/test.pdf'):
+def visual(config, true, preds=None, name='./pic/test.pdf'):
     """
     Results visualization
     """
+    os.makedirs('./pic', exist_ok=True)
+
     plt.figure()
     plt.plot(true, label='GroundTruth', linewidth=2)
     if preds is not None:
         plt.plot(preds, label='Prediction', linewidth=2)
     plt.legend()
+    plt.xlabel("pred_len", fontsize=15)
+    plt.ylabel("value", fontsize=15)
+    plt.title(f'{config.name},pred_len{config.pred_len}')
     plt.savefig(name, bbox_inches='tight')
+    plt.close()
 
 
 def adjustment(gt, pred):
@@ -156,9 +162,4 @@ def get_loss_fn(loss_fn: str):
     raise RuntimeError("loss function should not be {}".format(loss_fn))
 
 
-def get_dim(level: str):
-    # 升维到512所分解的特征数
-    my_dict = {
-        "4": [38, 38, 70, 133, 259]
-    }
-    return my_dict[level]
+

@@ -30,7 +30,7 @@ def ltf_experiment(config,gpus):
                          precision="16-mixed",
                          callbacks=callbacks,
                          logger=logger,
-                         max_epochs=50,
+                         max_epochs=40,
                          gradient_clip_val=config.grad_clip_val)
     trainer.fit(model, train_dl, val_dl)
     model = LTFModule.load_from_checkpoint(ckpt_callback.best_model_path)
@@ -43,12 +43,17 @@ def run_ltf(args):
     dataset_dict['etth2'] = ETTh2_LTFConfig
     dataset_dict['ettm1'] = ETTm1_LTFConfig
     dataset_dict['ettm2'] = ETTm2_LTFConfig
+    dataset_dict['ecl'] = ECL_LTFConfig
+    dataset_dict['traffic'] = Traffic_LTFConfig
+    dataset_dict['weather'] = Weather_LTFConfig
+    dataset_dict['exchange'] = Exchange_LTFConfig
     datasets = []
     dataset_args = set([str.lower(d) for d in args.dataset])
     if "all" in dataset_args:
         datasets += [
             ETTh1_LTFConfig, ETTh2_LTFConfig, ETTm1_LTFConfig,
-            ETTm2_LTFConfig
+            ETTm2_LTFConfig, Traffic_LTFConfig, Weather_LTFConfig,
+            Exchange_LTFConfig
         ]
     else:
         datasets += [dataset_dict[d] for d in dataset_args]
