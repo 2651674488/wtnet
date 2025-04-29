@@ -8,10 +8,30 @@ from utils.tools import get_csv_logger
 
 def ltf_experiment(config,gpus):
     pl.seed_everything(2025)
-    _, train_dl = data_provider(config, "train")
-    _, val_dl = data_provider(config, "val")
-    _, test_dl = data_provider(config, "test")
+    train_dataset, train_dl = data_provider(config, "train")
+    val_dataset, val_dl = data_provider(config, "val")
+    test_dataset, test_dl = data_provider(config, "test")
 
+    class DataModule(pl.LightningDataModule):
+        def __init__(self, train_dl, val_dl, test_dl):
+            super().__init__()
+            self.train_dl = train_dl
+            self.val_dl = val_dl
+            self.test_dl = test_dl
+            self.train_dataset = train_dataset
+            self.val_dataset = val_dataset
+            self.test_dataset = test_dataset
+
+        def train_dataloader(self):
+            return self.train_dl
+
+        def val_dataloader(self):
+            return self.val_dl
+
+        def test_dataloader(self):
+            return self.test_dl
+
+    data_module = DataModule(train_dl, val_dl, test_dl)
     model = LTFModule(config)
     monitor_metric = "val_mse"
     callbacks = []
@@ -27,14 +47,14 @@ def ltf_experiment(config,gpus):
                             name=f"{config.name}_{config.pred_len}")
     trainer = pl.Trainer(devices=[gpus],
                          accelerator="gpu",
-                         precision="16-mixed",
+                         precision="32-true",
                          callbacks=callbacks,
                          logger=logger,
                          max_epochs=40,
                          gradient_clip_val=config.grad_clip_val)
-    trainer.fit(model, train_dl, val_dl)
+    trainer.fit(model, datamodule=data_module)
     model = LTFModule.load_from_checkpoint(ckpt_callback.best_model_path)
-    trainer.test(model, test_dl)
+    trainer.test(model, datamodule=data_module)
 
 
 def run_ltf(args):

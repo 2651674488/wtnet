@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
@@ -75,21 +77,59 @@ class StandardScaler():
         return (data * self.std) + self.mean
 
 
-def visual(config, true, preds=None, name='./pic/test.pdf'):
-    """
-    Results visualization
-    """
-    os.makedirs('./pic', exist_ok=True)
 
+def visual(config, true, preds=None):
+    """
+    改进后的可视化函数，自动按数据集分类存储并防止文件覆盖
+    """
+    # 构建存储路径
+    base_dir = os.path.join('./pic', config.name)
+    os.makedirs(base_dir, exist_ok=True)
+
+    # 生成文件名基础部分（包含关键参数）
+    file_base = f"pred{config.pred_len}_{config.features}"
+
+    # 查找现有文件的最大编号
+    max_num = 0
+    pattern = re.compile(rf"^{file_base}_(\d+)\.png$")
+    for filename in os.listdir(base_dir):
+        match = pattern.match(filename)
+        if match:
+            current_num = int(match.group(1))
+            max_num = max(max_num, current_num)
+
+    # 生成新文件名
+    new_filename = f"{file_base}_{max_num + 1}.png"
+    save_path = os.path.join(base_dir, new_filename)
+
+    # 绘图逻辑保持不变
     plt.figure()
     plt.plot(true, label='GroundTruth', linewidth=2)
     if preds is not None:
         plt.plot(preds, label='Prediction', linewidth=2)
     plt.legend()
-    plt.xlabel("pred_len", fontsize=15)
-    plt.ylabel("value", fontsize=15)
-    plt.title(f'{config.name},pred_len{config.pred_len}')
-    plt.savefig(name, bbox_inches='tight')
+    plt.xlabel("Time Steps", fontsize=12)  # 更合理的坐标标签
+    plt.ylabel("Value", fontsize=12)
+    plt.title(f'{config.name} (Prediction Length: {config.pred_len})', fontsize=14)
+    plt.grid(True, alpha=0.3)
+    param_text = (
+        f"Model Parameters:\n"
+        f"• Learning Rate: {getattr(config, 'lr', 'N/A')}\n"
+        f"• Dropout Rate: {getattr(config, 'drop', 'N/A')}\n"
+        f"• Level: {getattr(config, 'level', 'N/A')}\n"
+        f"• Batch Size: {getattr(config, 'batch_size', 'N/A')}\n"
+    )
+
+    # 在图表右下角添加参数文本框
+    plt.text(0.95, 0.05, param_text,
+             transform=plt.gca().transAxes,
+             fontsize=10,
+             verticalalignment='bottom',
+             horizontalalignment='right',
+             bbox=dict(facecolor='white', alpha=0.7, edgecolor='gray', boxstyle='round'))
+
+    # 保存文件
+    plt.savefig(save_path, bbox_inches='tight', dpi=300)
     plt.close()
 
 

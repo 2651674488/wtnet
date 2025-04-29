@@ -13,7 +13,7 @@ class LTFModule(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.out_chn = config.out_chn
-        self.model = WtNet(wavelet=config.wavelet, level=config.level, axis=config.axis, in_seq=config.in_seq,
+        self.model = WtNet(wavelet=config.wavelet, level=config.level, axis=config.axis,
                            hid_seq=config.hid_seq, out_seq=config.out_seq,
                            drop=config.drop, pred_len=config.pred_len,seq_len=config.seq_len, filter_len=config.filter_len)
 
@@ -62,7 +62,7 @@ class LTFModule(pl.LightningModule):
         return
 
     def test_step(self, batch, batch_idx):
-        x, y, x_mark, _ = batch
+        x, y, x_mark, _, real_y = batch
         x = x.float()
         y = y.float()
         x_mark = x_mark.float()
@@ -72,16 +72,21 @@ class LTFModule(pl.LightningModule):
         self.test_mae(y_pred, y)
         self.log("test_mse", self.test_mse)
         self.log("test_mae", self.test_mae)
+        original_shape = y_pred.shape
+        # 转换为2D [batch_size * seq_len, n_features]
+        y_pred_2d = y_pred.reshape(-1, original_shape[-1]).cpu().numpy()
+        # 反归一化
+        y_pred_original = self.trainer.datamodule.test_dataset.inverse_transform(y_pred_2d)
+        # 恢复原始形状
+        y_pred_original = torch.from_numpy(y_pred_original).to(y_pred.device)
+        y_pred_original = y_pred_original.reshape(original_shape)
 
         # 可视化部分（只对第一个batch进行可视化）
-        if batch_idx == 0:  # 只对第一个batch进行可视化，避免太多图片
-            # 假设y和y_pred的形状是[batch_size, seq_len, features]
-            # 这里我们取batch中的第一个样本进行可视化
-            true = y[0, :, self.out_chn - 1].detach().cpu().numpy()  # 取第一个样本，所有时间步，第一个特征
-            pred = y_pred[0, :, self.out_chn - 1].detach().cpu().numpy()
-            name = f'./pic/{self.config.name}/{self.config.pred_len}_{self.config.features}.png'
-            # 调用可视化函数
-            visual(self.config ,true, pred, name=name)
+        if batch_idx == 0:
+            true = real_y[0, :, self.out_chn - 1].detach().cpu().numpy()
+            pred = y_pred_original[0, :, self.out_chn - 1].detach().cpu().numpy()
+            visual(self.config, true, pred)
+
         return
 
     def configure_optimizers(self):

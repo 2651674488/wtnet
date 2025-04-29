@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # 读取日志数据
-df = pd.read_csv("../logs/ltf/ettm1_96/version_2/metrics.csv")
+df = pd.read_csv("../logs/ltf/exchange_/version_6/metrics.csv")
 
 # 过滤无效值（如test_mse在验证阶段为NaN）
 df = df.dropna(subset=["val_mse", "val_mae"])

@@ -55,6 +55,7 @@ class Dataset_ETT_hour(Dataset):
             df_data = df_raw[cols_data]
         elif self.features == 'S':
             df_data = df_raw[[self.target]]
+        self.raw_data = df_data.values[border1:border2]
 
         if self.scale:
             train_data = df_data[border1s[0]:border2s[0]]
@@ -90,7 +91,12 @@ class Dataset_ETT_hour(Dataset):
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
 
-        return seq_x, seq_y, seq_x_mark, seq_y_mark
+        if self.set_type == 2:  # 测试集
+            real_y = self.raw_data[r_begin:r_end]
+            return seq_x, seq_y, seq_x_mark, seq_y_mark, real_y
+        else:  # 训练集和验证集
+            return seq_x, seq_y, seq_x_mark, seq_y_mark
+
 
     def __len__(self):
         return len(self.data_x) - self.seq_len - self.pred_len + 1
@@ -143,6 +149,7 @@ class Dataset_ETT_minute(Dataset):
             df_data = df_raw[cols_data]
         elif self.features == 'S':
             df_data = df_raw[[self.target]]
+        self.raw_data = df_data.values[border1:border2]
 
         if self.scale:
             train_data = df_data[border1s[0]:border2s[0]]
@@ -180,7 +187,11 @@ class Dataset_ETT_minute(Dataset):
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
 
-        return seq_x, seq_y, seq_x_mark, seq_y_mark
+        if self.set_type == 2:  # 测试集
+            real_y = self.raw_data[r_begin:r_end]
+            return seq_x, seq_y, seq_x_mark, seq_y_mark, real_y
+        else:  # 训练集和验证集
+            return seq_x, seq_y, seq_x_mark, seq_y_mark
 
     def __len__(self):
         return len(self.data_x) - self.seq_len - self.pred_len + 1
@@ -243,6 +254,7 @@ class Dataset_Custom(Dataset):
             df_data = df_raw[cols_data]
         elif self.features == 'S':
             df_data = df_raw[[self.target]]
+        self.raw_data = df_data.values[border1:border2]
 
         if self.scale:
             train_data = df_data[border1s[0]:border2s[0]]
@@ -277,8 +289,11 @@ class Dataset_Custom(Dataset):
         seq_y = self.data_y[r_begin:r_end]
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
-
-        return seq_x, seq_y, seq_x_mark, seq_y_mark
+        if self.set_type == 2:  # 测试集
+            real_y = self.raw_data[r_begin:r_end]
+            return seq_x, seq_y, seq_x_mark, seq_y_mark, real_y
+        else:  # 训练集和验证集
+            return seq_x, seq_y, seq_x_mark, seq_y_mark
 
     def __len__(self):
         return len(self.data_x) - self.seq_len - self.pred_len + 1

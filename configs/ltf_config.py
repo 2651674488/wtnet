@@ -10,7 +10,7 @@ class LTFConfig():
         self.batch_size = 16  # 32
         self.num_workers = 1  # 8
         self.freq = 'h'
-        self.seq_len = pred_len * 2
+        self.seq_len = 96
         self.pred_len = pred_len
 
         # model component
@@ -18,7 +18,7 @@ class LTFConfig():
         self.norm = None
         self.wavelet = "db4"
         self.filter_len = 8
-        self.level = 4
+        self.level = 3
         self.axis = 1
         self.scale = True
         #
@@ -46,7 +46,7 @@ class ETTh1_LTFConfig(LTFConfig):
         self.data_path = "ETTh1.csv"
         self.in_chn = 1
         self.out_chn = 1
-        self.drop = 0.5
+        self.drop = 0.3
         self.hid_chn = 512
         self.in_seq = 7
         self.out_seq = pred_len
@@ -66,15 +66,17 @@ class ETTh2_LTFConfig(LTFConfig):
         self.root_path = "./dataset/ETT-small/"
         self.data_path = "ETTh2.csv"
         self.in_chn = 7
-        self.out_chn = 7
-        self.drop = 0.5
+        self.out_chn = 1
+        self.drop = 0.6
         self.hid_chn = 512
         self.in_seq = 7
         self.out_seq = pred_len
         self.hid_seq = 512
         self.weight_decay = 1
-        self.lr = 1e-3  # 1e-4
+        self.lr = 1e-4  # 1e-4
         self.scale = True
+        if self.features == 'M':
+            self.out_chn = 7
 
 
 class ETTm1_LTFConfig(LTFConfig):
@@ -113,6 +115,9 @@ class ETTm2_LTFConfig(LTFConfig):
         self.weight_decay = 1
         self.lr = 1e-3  # 1e-4
         self.scale = True
+        if self.features == 'M':
+            self.out_chn = 7
+
 
 class ECL_LTFConfig(LTFConfig):
 
@@ -128,8 +133,10 @@ class ECL_LTFConfig(LTFConfig):
         self.drop = 0.5
         self.out_chn = 1
         self.lr = 1e-3  # 1e-4
-        self.level = 4
+        self.level = 3
         self.scale = True
+        if self.features == 'M':
+            self.out_chn = 321
 
 
 class Traffic_LTFConfig(LTFConfig):
@@ -146,10 +153,13 @@ class Traffic_LTFConfig(LTFConfig):
         self.out_seq = pred_len
         self.hid_seq = 512
         self.drop = 0.5
-        self.lr = 1e-3 
-        self.level = 4
+        self.lr = 1e-3
+        self.level = 3
         self.out_chn = 1
         self.scale = True
+        if self.features == 'M':
+            self.out_chn = 862
+
 
 class Weather_LTFConfig(LTFConfig):
 
@@ -162,11 +172,13 @@ class Weather_LTFConfig(LTFConfig):
         self.in_seq = 7
         self.out_seq = pred_len
         self.hid_seq = 512
-        self.drop = 0.4
-        self.level = 4
+        self.drop = 0.0
+        self.level = 3
         self.out_chn = 1
         self.lr = 1e-3
         self.scale = True
+        if self.features == 'M':
+            self.out_chn = 21
 
 
 class Exchange_LTFConfig(LTFConfig):
@@ -177,13 +189,13 @@ class Exchange_LTFConfig(LTFConfig):
         self.data = "custom"
         self.root_path = "./dataset/exchange_rate/"
         self.data_path = "exchange_rate.csv"
-        self.in_seq = 7
+        # self.in_seq = 7
         self.out_seq = pred_len
         self.hid_seq = 512
         self.drop = 0.5
         self.level = 3
         self.out_chn = 1
-        self.lr = 1e-3
-        self.scale = False
+        self.lr = 1e-4  # 1e-4
+        self.scale = True
         if self.features == 'M':
             self.out_chn = 8
